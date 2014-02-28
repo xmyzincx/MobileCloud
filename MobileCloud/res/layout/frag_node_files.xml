@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/frag_node_files"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_bg"
+    android:orientation="vertical" >
+
+    <RelativeLayout
+        android:id="@+id/app_header"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@drawable/list_header_bg"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        android:paddingLeft="20dp" >
+
+        <ListView
+            android:id="@+id/listView1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="2dp"
+            android:background="@drawable/gradient_bg"
+            android:divider="#b5b5b5"
+            android:dividerHeight="1dp"
+            android:listSelector="@drawable/list_selector"
+            android:overScrollMode="always" >
+        </ListView>
+
+        <!-- <LinearLayout -->
+        <!-- android:id="@+id/role" -->
+        <!-- android:layout_width="wrap_content" -->
+        <!-- android:layout_height="wrap_content" -->
+        <!-- android:layout_alignParentLeft="true" -->
+        <!-- android:layout_centerVertical="true" -->
+        <!-- android:layout_marginRight="5dp" -->
+        <!-- android:paddingBottom="5dp" -->
+        <!-- android:paddingLeft="15dp" -->
+        <!-- android:paddingRight="15dp" -->
+        <!-- android:paddingTop="5dp" > -->
+
+
+        <!-- <TextView -->
+        <!-- android:id="@+id/roleText" -->
+        <!-- android:layout_width="wrap_content" -->
+        <!-- android:layout_height="wrap_content" -->
+        <!-- android:layout_gravity="bottom" -->
+        <!-- android:paddingBottom="0dp" -->
+        <!-- android:paddingLeft="0dp" -->
+        <!-- android:paddingRight="0dp" -->
+        <!-- android:paddingTop="0dp" -->
+        <!-- android:textColor="#ffffff" -->
+        <!-- android:text="CN" -->
+        <!-- android:textSize="18dp" -->
+        <!-- android:typeface="monospace" /> -->
+
+
+        <!-- </LinearLayout> -->
+
+    </RelativeLayout>
+
+</RelativeLayout>

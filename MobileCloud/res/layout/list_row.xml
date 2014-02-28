@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/list_selector"
+    android:orientation="horizontal"
+    android:padding="8dp" >
+ 
+    <!--  ListRow Left sied Thumbnail image -->
+    <LinearLayout android:id="@+id/thumbnail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="5dp"
+		android:paddingLeft="20dp"
+		android:paddingRight="1dp"
+		android:paddingTop="5dp"      
+        android:layout_alignParentLeft="true"        
+        android:layout_marginRight="5dp">
+
+  		<com.cwc.mobilecloud.VerticalTextView
+  		    android:id="@+id/textIcon"
+  		    android:layout_width="wrap_content"
+  		    android:layout_height="wrap_content"
+  		    android:layout_gravity="bottom"
+  		    android:paddingBottom="0dp"
+			android:paddingLeft="0dp"
+			android:paddingRight="0dp"
+			android:paddingTop="0dp"
+  		    android:textColor="#ffffff"
+  		    android:textSize="22dp"
+  		    android:typeface="monospace" />
+
+    </LinearLayout>
+    
+ 
+    <!-- Title Of Song-->
+
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/thumbnail"
+        android:layout_toRightOf="@+id/thumbnail"
+        android:paddingLeft="7dp"
+        android:textColor="#040404"
+        android:textSize="14dp"
+        android:textStyle="bold"
+        android:typeface="sans" />
+ 
+    <!-- Artist Name -->
+    <TextView
+        android:id="@+id/artist"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title"
+        android:paddingLeft="7dp"
+        android:textColor="#343434"
+        android:textSize="10dp"
+        android:layout_marginTop="1dp"
+        android:layout_toRightOf="@+id/thumbnail"
+         />
+    <TextView
+        android:id="@+id/timestamp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/artist"
+        android:paddingLeft="7dp"
+        android:textColor="#343434"
+        android:textSize="10dp"
+        android:layout_marginTop="1dp"
+        android:layout_toRightOf="@+id/thumbnail"
+         />
+ 
+    <!-- Rightend Duration -->
+    <TextView
+        android:id="@+id/duration"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@id/title"
+        android:gravity="right"
+        android:layout_marginRight="5dp"
+        android:textSize="10dp"
+        android:textColor="#10bcc9"
+        android:textStyle="bold"/>
+
+    <ImageView
+        android:id="@+id/delImg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="2dp"
+        android:paddingBottom="2dp"
+        android:maxHeight="@dimen/delete_width"
+        android:maxWidth="@dimen/delete_width"
+        android:src="@drawable/del_icon" />
+ 
+</RelativeLayout>

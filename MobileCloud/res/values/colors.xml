@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+<!--     <color name = "DarkGrey">#A9A9A9</color> -->
+    <string-array name="bgColors">
+        
+        <item >#FF717E</item>
+        <item >#9BCA3E</item>
+        <item >#3ABBC9</item>
+        <item >#CA6259</item>
+        <item >#ED5314</item>
+        <item >#FFB92A</item>
+        <item >#FEEB51</item>
+         
+        <item >#027878</item>
+        <item >#801638</item>
+    </string-array>
+    <color name="EmptyTextFGColor">#000000</color>
+    <color name="LogoColor">#00407A</color>
+    
+
+</resources>

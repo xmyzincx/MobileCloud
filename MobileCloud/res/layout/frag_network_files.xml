@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/frag_network_files"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/gradient_bg"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/URL"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/SiteURL"
+        android:inputType="text" >
+    </EditText>
+
+    <Button
+        android:id="@+id/DownloadButton"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/URL"
+        android:onClick="sendFeedback"
+        android:text="@string/downloadButton" >
+    </Button>
+
+    <com.cwc.mobilecloud.TextProgressBar
+        android:id="@+id/DLProgressBar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/DownloadButton"
+        android:max="100"
+        android:maxHeight="20dp"
+        android:minHeight="16dp"
+        android:padding="5dp"
+        android:progressDrawable="@drawable/progress_bar"
+        android:progress="25" />
+
+    <ExpandableListView
+        android:id="@+id/lvExp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/DLProgressBar" />
+
+</RelativeLayout>
