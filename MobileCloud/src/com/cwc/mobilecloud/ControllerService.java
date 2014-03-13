@@ -3,6 +3,7 @@ package com.cwc.mobilecloud;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import org.json.simple.JSONValue;
 
 import com.cwc.mobilecloud.ConfigData.AppConstant;
 import com.cwc.mobilecloud.utilities.Shell;
+import com.cwc.mobilecloud.utilities.Tree;
+import com.cwc.mobilecloud.utilities.TreeNode;
 import com.cwc.mobilecloud.utilities.Utilities;
 import com.cwc.mobilecloud.utilities.Constants;
 
@@ -40,6 +43,8 @@ import android.widget.Toast;
 public class ControllerService extends Service {
 
 	private static final String TAG = "ControllerService";
+
+	private static final String DTAG = "Debug";
 
 	/************ <Controller Local Objects> ***********/
 	private final IBinder mBinder = new MyBinder();
@@ -179,8 +184,8 @@ public class ControllerService extends Service {
 		Log.d(TAG, "Starting CL selection thread");
 		CLThread = new CLSelecThread(ctx, handler);
 		CLThread.start();
-		
-//		Utilities.generateTestingResults("Test_Results1.txt", "abdul moiz");
+
+		//		Utilities.generateTestingResults("Test_Results1.txt", "abdul moiz");
 
 	}
 
@@ -270,11 +275,11 @@ public class ControllerService extends Service {
 		@Override
 		protected Void doInBackground(Void... params) {
 			// TODO Auto-generated method stub
-			
+
 			if(asyncBundle.get("requestType").equals(Constants.request_file)){
-				
+
 				//send message to cl or node that has the required file
-				
+
 				Map<String, Object> init_data_msg=new LinkedHashMap();
 
 				Log.d(TAG, "data initializing trigger");
@@ -294,17 +299,17 @@ public class ControllerService extends Service {
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
 			}
-			
-			
+
+
 			else if(asyncBundle.get("requestType").equals(Constants.request_url)){
-				
+
 				//send message to CL for URL request
 				Log.d(TAG, "requesting CL to get file from URL ");
-				
+
 				String file_req = (String) asyncBundle.get("file");
 
 				String file_on_IP = (String) asyncBundle.get("sourceIP");
-				
+
 				//send message to cl or node that has the required file
 				Map<String, Object> url_req_msg=new LinkedHashMap();
 
@@ -322,9 +327,9 @@ public class ControllerService extends Service {
 				Log.d(TAG, "Sending file request to node: " + file_on_IP + " on Port: " + ConfigData.getMcPort());
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
-				
+
 			}
-			
+
 			return null;
 		}
 	}

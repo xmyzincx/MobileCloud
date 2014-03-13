@@ -204,7 +204,7 @@ public class CLSelecThread extends Thread {
 
 		//CLSelecTimerCallback();
 	}
-	
+
 
 	public TimerTask task = new TimerTask() {
 

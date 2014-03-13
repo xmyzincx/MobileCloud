@@ -48,6 +48,8 @@ public final class ConfigData {
 	public static File FilesDir;
 	public static NetLog NLog;						// Logging Server
 	
+	public static int relayNodes = 1;					// Number of relay nodes
+	
 	public class AppConstant{
 		public static final int CN_INFO_TIMEOUT = 10;		// seconds
 		public static final int PEER_EXPIRE_AGE = 5;		// 5 * CN_INFO_TIMEOUT

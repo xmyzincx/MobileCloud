@@ -10,9 +10,18 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -21,6 +30,7 @@ import org.apache.http.conn.util.InetAddressUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.cwc.mobilecloud.ConfigData;
 import com.cwc.mobilecloud.utilities.Constants;
 import com.cwc.mobilecloud.utilities.Shell;
 import com.cwc.mobilecloud.utilities.Utilities;
@@ -44,6 +54,8 @@ public final class Utilities {
 	private static boolean acCharge = false;
 	private static int level_percent = 0;
 	private static String BatVal;
+
+	private static Map<String, String> childParentTable = new HashMap<String, String>();
 
 	private static ReadWriteLock batteryLock = new ReentrantReadWriteLock();
 
@@ -170,10 +182,11 @@ public final class Utilities {
 	}
 
 
-
 	public static enum Mode {
 		ALPHA, ALPHANUMERIC, NUMERIC 
 	}
+
+
 
 	public static String generateRandomString(int length, Mode mode) throws Exception {
 
@@ -268,6 +281,168 @@ public final class Utilities {
 	}
 
 
+	public static <K, V extends Comparable<V>> Map<K, V> sortBatvals(Map<K, V> unsortedMap) {
+
+		SortedMap<K, V> sortedMap = new TreeMap<K, V>(new ValueComparer<K, V>(unsortedMap) );
+
+		sortedMap.putAll(unsortedMap);
+
+		return sortedMap;
+	}
+
+
+	public static Map<String, JSONArray> getTreeDistTable(Map<String, Integer> SortedIDBatVal){
+
+		String[] idList = SortedIDBatVal.keySet().toArray(new String[0]);
+		String pNodeID = null;
+		JSONArray cNodesArray = null;
+		childParentTable.clear();
+
+		boolean limit_reached =  false;
+
+		int nodes_limit = idList.length;
+		int main_index = 0;
+		int multiplier = 1;
+		int nodesMultiple = -(ConfigData.relayNodes);
+		int previous_index = 0;
+		int parent_limit = 0;
+		int nodes_counter = 0;
+
+		TreeNode<String> root_node = new TreeNode<String>(Utilities.getDeviceID());
+		Tree<String> nodes_tree = new Tree<String>();
+		TreeNode<String> parent_node;
+
+		List<TreeNode<String>> previous_nodes_list = new ArrayList<TreeNode<String>>();
+		List<TreeNode<String>> temp_list = new ArrayList<TreeNode<String>>();
+
+		previous_nodes_list.add(root_node);
+
+		Map<String, JSONArray> dist_table = new HashMap<String, JSONArray>();
+
+		while(limit_reached == false){
+
+			int child_limit = ConfigData.relayNodes;
+
+			if(multiplier == 1){
+				parent_limit = 1;
+				previous_index = 0;
+			}
+
+			else{
+				parent_limit = ConfigData.relayNodes * (previous_index + 1);
+				previous_index = parent_limit;
+			}
+
+			//			Log.d(DTAG, "parent_limit: " + parent_limit);
+			//			Log.d(DTAG, "previous_index: " + previous_index);
+
+			for(int i = main_index; i < parent_limit; i++){
+
+				if(limit_reached == false){
+
+					//					Log.d(DTAG, "parent_node index: " + (i - main_index));
+					//					Log.d(DTAG, "previous nodes list size: " + previous_nodes_list.size());
+
+					parent_node = previous_nodes_list.get(i - main_index);
+					pNodeID = parent_node.getData();
+					cNodesArray = new JSONArray();
+
+					for(int j = 0; j < child_limit; j++){
+
+						if(nodes_counter < nodes_limit){
+
+							//							Log.d(DTAG, "ids from list: " + idList[j + nodesMultiple + ConfigData.relayNodes]);
+
+							TreeNode<String> child_node = new TreeNode<String>(idList[j + nodesMultiple + ConfigData.relayNodes]);
+							parent_node.addChild(child_node);
+							temp_list.add(child_node);
+							String cNodeID = child_node.getData();
+							cNodesArray.add(cNodeID);
+							childParentTable.put(cNodeID, pNodeID);
+							nodes_counter++;
+
+							//							Log.d(DTAG, "Counter: " + nodes_counter);
+						}
+
+						else{
+							limit_reached = true;
+							Log.d(TAG, "nodes limit has reached");
+							break;
+						}
+					}
+
+					nodesMultiple = nodesMultiple + ConfigData.relayNodes;
+					//					Log.d(DTAG, "nodesMultiple: " + nodesMultiple);
+
+
+
+					if(!cNodesArray.isEmpty() && cNodesArray!=null){
+						dist_table.put(pNodeID, cNodesArray);
+						Log.d(TAG, "pNodeID: " + pNodeID + " cNodesArray" + cNodesArray.toString());
+					}
+					//					Log.d(DTAG, "Parent Node " + pNodeID + ": " + "Children nodes: " + cNodesArray.toString());
+				}
+
+				else break;
+			}
+
+			previous_nodes_list = null;
+			previous_nodes_list = new ArrayList<TreeNode<String>>();
+			previous_nodes_list = temp_list;
+			temp_list = null;
+			temp_list = new ArrayList<TreeNode<String>>();
+			main_index = previous_index;
+			multiplier = multiplier * ConfigData.relayNodes;
+			//			Log.d(DTAG, "main_index: " + main_index);
+			//			Log.d(DTAG, "multiplier: " + multiplier);
+		}
+
+		nodes_tree.setRoot(root_node);
+		Log.d(TAG, "number of nodes in the tree: " + nodes_tree.getNumberOfNodes());
+
+		//		for(String key : dist_table.keySet()){
+		//			
+		//			Log.d(DTAG, "Parent Node " + (String) key + ": " + "Children nodes: " + dist_table.get(key).toString());
+		//			
+		//		}
+
+		return dist_table;
+	}
+
+
+	public static String getParentNode(String node){
+
+		String parent = null;
+		
+		parent = childParentTable.get(node);
+
+		return parent;
+	}
+
+
+	private static class ValueComparer<K, V extends Comparable<V>> implements Comparator<K> {
+
+		private final Map<K, V> map;
+
+		public ValueComparer(Map<K, V> map) {
+			super();
+			this.map = map;
+		}
+
+		public int compare(K key1, K key2) {
+			V value1 = this.map.get(key1);
+			V value2 = this.map.get(key2);
+			int c = value2.compareTo(value1);
+			if (c != 0) {
+				return c;
+			}
+			Integer hashCode1 = key1.hashCode();
+			Integer hashCode2 = key2.hashCode();
+			return hashCode2.compareTo(hashCode1);
+		}
+	}
+
+
 	public static void generateTestingResults (String fileName, String data){
 
 		File filePath = new File(Constants.results_path);
@@ -305,7 +480,6 @@ public final class Utilities {
 			e.printStackTrace();
 			Log.e(TAG, "Failed to write: " + e.toString());
 		}
-
 	}
 
 

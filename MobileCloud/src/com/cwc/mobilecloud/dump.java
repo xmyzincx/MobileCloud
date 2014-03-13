@@ -11,7 +11,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.json.simple.JSONObject;
@@ -21,6 +24,8 @@ import android.os.Bundle;
 import android.os.Message;
 import android.util.Log;
 
+import com.cwc.mobilecloud.utilities.Tree;
+import com.cwc.mobilecloud.utilities.TreeNode;
 import com.cwc.mobilecloud.utilities.Utilities;
 
 public class dump {
@@ -419,6 +424,180 @@ public class dump {
 //			e.printStackTrace();
 //		}
 //	}
+
+	
+	
+	
+//	// UnSorted battery values with IDs
+//	Map<String, Integer> IDandBatVal = new HashMap<String, Integer>();
+//
+//	IDandBatVal.put("1", 15);
+//	IDandBatVal.put("2", 14);
+//	IDandBatVal.put("3", 13);
+//	IDandBatVal.put("4", 12);
+//	IDandBatVal.put("5", 11);
+//	IDandBatVal.put("6", 10);
+//	IDandBatVal.put("7", 9);
+//	IDandBatVal.put("8", 8);
+//	IDandBatVal.put("9", 7);
+//	IDandBatVal.put("10", 6);
+//	IDandBatVal.put("11", 5);
+//	IDandBatVal.put("12", 4);
+//	IDandBatVal.put("13", 3);
+//	IDandBatVal.put("14", 2);
+//	IDandBatVal.put("15", 1);
+//
+//	// Sorted battery values with IDs
+//	Map<String, Integer> SortedIDBatVal = new HashMap<String, Integer>();
+//
+//	SortedIDBatVal = Utilities.sortBatvals(IDandBatVal);
+//
+//	String[] idList = SortedIDBatVal.keySet().toArray(new String[0]);
+//
+//	int nodes_limit = idList.length;
+//
+//	boolean limit_reached =  false;
+//
+//	TreeNode<String> root_node = new TreeNode<String>(Utilities.getDeviceID());
+//
+//	Tree<String> nodes_tree = new Tree<String>();
+//
+//	int main_index = 0;
+//
+//	int multiplier = 1;
+//
+//	int nodesMultiple = -(ConfigData.relayNodes);
+//
+//	int previous_index = 0;
+//
+//	int parent_limit = 0;
+//
+//	int nodes_counter = 0;
+//
+//	List<TreeNode<String>> previous_nodes_list = new ArrayList<TreeNode<String>>();
+//
+//	List<TreeNode<String>> temp_list = new ArrayList<TreeNode<String>>();
+//	
+//	previous_nodes_list.add(root_node);
+//
+//	TreeNode<String> parent_node;
+//	
+//	Map<String, String[]> dist_table = new HashMap<String, String[]>();
+//	
+//	String pNodeID = null;
+//	
+//	String[] cNodesArray = null;
+//
+//	while(limit_reached == false){
+//
+//		int child_limit = ConfigData.relayNodes;
+//
+//		if(multiplier == 1){
+//
+//			parent_limit = 1;
+//
+//			previous_index = 0;
+//		}
+//
+//		else{
+//
+//			parent_limit = ConfigData.relayNodes * (previous_index + 1);
+//
+//			previous_index = parent_limit;
+//
+//		}
+//
+////		Log.d(DTAG, "parent_limit: " + parent_limit);
+////		Log.d(DTAG, "previous_index: " + previous_index);
+//
+//		for(int i = main_index; i < parent_limit; i++){
+//
+//			if(limit_reached == false){
+//
+////				Log.d(DTAG, "parent_node index: " + (i - main_index));
+////
+////				Log.d(DTAG, "previous nodes list size: " + previous_nodes_list.size());
+//
+//				parent_node = previous_nodes_list.get(i - main_index);
+//				
+//				pNodeID = parent_node.getData();
+//				
+//				cNodesArray = new String[child_limit];
+//
+//
+//				for(int j = 0; j < child_limit; j++){
+//
+//					if(nodes_counter < nodes_limit){
+//
+////						Log.d(DTAG, "ids from list: " + idList[j + nodesMultiple + ConfigData.relayNodes]);
+//
+//						TreeNode<String> child_node = new TreeNode<String>(idList[j + nodesMultiple + ConfigData.relayNodes]);
+//
+//						parent_node.addChild(child_node);
+//
+//						temp_list.add(child_node);
+//						
+//						cNodesArray[j] = child_node.getData();
+//						
+//						nodes_counter++;
+//
+////						Log.d(DTAG, "Counter: " + nodes_counter);
+//
+//					}
+//
+//					else{
+//
+//						limit_reached = true;
+//
+//						Log.d(DTAG, "nodes limit has reached");
+//
+//						break;
+//					}
+//				}
+//
+//				nodesMultiple = nodesMultiple + ConfigData.relayNodes;
+//
+////				Log.d(DTAG, "nodesMultiple: " + nodesMultiple);
+//				
+//				dist_table.put(pNodeID, cNodesArray);
+//				
+////				Log.d(DTAG, "Parent Node " + pNodeID + ": " + "Children nodes: " + cNodesArray.toString());
+//
+//			}
+//
+//			else break;
+//
+//		}
+//		
+//		previous_nodes_list = null;
+//
+//		previous_nodes_list = new ArrayList<TreeNode<String>>();
+//
+//		previous_nodes_list = temp_list;
+//
+//		temp_list = null;
+//
+//		temp_list = new ArrayList<TreeNode<String>>();
+//
+//		main_index = previous_index;
+//
+//		multiplier = multiplier * ConfigData.relayNodes;
+//
+////		Log.d(DTAG, "main_index: " + main_index);
+////
+////		Log.d(DTAG, "multiplier: " + multiplier);
+//	}
+//
+//	nodes_tree.setRoot(root_node);
+//
+//	Log.d(DTAG, "number of nodes in the tree: " + nodes_tree.getNumberOfNodes());
+//
+//	
+////	for(String key : dist_table.keySet()){
+////		
+////		Log.d(DTAG, "Parent Node " + (String) key + ": " + "Children nodes: " + dist_table.get(key).toString());
+////		
+////	}
 
 
 }

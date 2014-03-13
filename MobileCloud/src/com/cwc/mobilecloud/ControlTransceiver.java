@@ -19,6 +19,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Dictionary;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ import com.cwc.mobilecloud.ConfigData.AppConstant;
 import com.cwc.mobilecloud.ConfigData.Facility;
 import com.cwc.mobilecloud.ConfigData.Severity;
 import com.cwc.mobilecloud.utilities.Constants;
+import com.cwc.mobilecloud.utilities.Tree;
+import com.cwc.mobilecloud.utilities.TreeNode;
 import com.cwc.mobilecloud.utilities.Utilities;
 
 import android.app.ActivityManager;
@@ -64,7 +67,10 @@ public class ControlTransceiver extends Thread {
 
 	private String adapterName = "wlan0";
 
-	private volatile int acceptCounter = 0;
+	//TODO Change this to enum
+	private static String nodeType = new String();
+	private volatile int parentAcceptCounter = 0;
+	private volatile int childAcceptCounter = 0;
 
 
 
@@ -177,6 +183,7 @@ public class ControlTransceiver extends Thread {
 		catch(Exception e){Log.d(TAG, "Error in JSON handling"); return;}
 
 		String msgType = (String)rxdata.get("msgType");
+		Log.d(TAG, "message type: " + msgType );
 
 		Map<String, Method> fMap = new LinkedHashMap();
 		Class[] params = new Class[3];
@@ -200,7 +207,8 @@ public class ControlTransceiver extends Thread {
 			// URL file request messages
 
 			fMap.put("URL_FILE_REQ", this.getClass().getDeclaredMethod("handle_url_file_req", params));
-			fMap.put("URL_FILE_RESP", this.getClass().getDeclaredMethod("handle_url_file_resp", params));
+			fMap.put("CN_TREE_SYNC_REQ", this.getClass().getDeclaredMethod("handle_cn_tree_sync_req", params));
+			fMap.put("CHILD_NODE_SYNC_REQ", this.getClass().getDeclaredMethod("handle_child_node_sync_req", params));
 			fMap.put("CL_SEND_URL_FILE", this.getClass().getDeclaredMethod("handle_cl_send_url_file", params));
 
 
@@ -492,31 +500,69 @@ public class ControlTransceiver extends Thread {
 
 		Log.d(TAG, "get file from url");
 
-		downloadingThread d_thread = new downloadingThread(rxdata, ip, port, true);
+		downloadingThread d_thread = new downloadingThread(rxdata, ip, port, "root_node");
 
 		d_thread.start();
+
+		nodeType = "rootNode";
 
 	}
 
 
-	private void handle_url_file_resp(JSONObject rxdata, String ip, int port){
 
-		Log.d(TAG, "URL_FILE_RESP mesg received");
+	private void handle_cn_tree_sync_req(JSONObject rxdata, String ip, int port){
 
-		downloadingThread d_thread = new downloadingThread(rxdata, ip, port, false);
+		Log.d(TAG, "CN_TREE_SYNC_REQ mesg received");
+
+
+		downloadingThread d_thread = new downloadingThread(rxdata, ip, port, "relay_node");
 
 		d_thread.start();
 
+		nodeType = "relayNode";
+
 	}
+
+
+
+	private void handle_child_node_sync_req(JSONObject rxdata, String ip, int port){
+
+		if(nodeType.equals("") || nodeType == null){
+
+			Log.d(TAG, "CHILD_NODE_SYNC_REQ mesg received");
+
+
+			downloadingThread d_thread = new downloadingThread(rxdata, ip, port, "child_node");
+
+			d_thread.start();
+
+			nodeType = "childNode";
+		}
+	}
+
+
 
 
 	private void handle_cl_send_url_file(JSONObject rxdata, String ip, int port){
 
 		Log.d(TAG, "CL_SEND_URL_FILE msg received");
 
-		acceptCounter = acceptCounter + 1;
+		Log.d(TAG, "node type: " + nodeType);
 
-		Log.d(TAG, "accept_counter: " + acceptCounter);
+		if(nodeType.equals("rootNode")){
+
+			parentAcceptCounter = parentAcceptCounter + 1;
+
+			Log.d(TAG, "parentAccept_counter: " + parentAcceptCounter);
+		}
+
+		else if(nodeType.equals("relayNode")){
+
+			childAcceptCounter = childAcceptCounter + 1;
+
+			Log.d(TAG, "childAcceptCounter: " + childAcceptCounter);
+
+		}
 
 		//		try{
 		//			String fname = (String) rxdata.get("filename");
@@ -788,15 +834,15 @@ public class ControlTransceiver extends Thread {
 		JSONObject rxdata_dThread;
 		String ip_dThread;
 		int port_dThread;
-		boolean nodeIsCL;
+		String node_Type;
 
 
-		public downloadingThread(JSONObject rxdata_dThread, String ip_dThread, int port_dThread, boolean nodeIsCL){
+		public downloadingThread(JSONObject rxdata_dThread, String ip_dThread, int port_dThread, String node_Type){
 
 			this.rxdata_dThread = rxdata_dThread;
 			this.ip_dThread = ip_dThread;
 			this.port_dThread = port_dThread;
-			this.nodeIsCL = nodeIsCL;
+			this.node_Type = node_Type;
 
 		}
 
@@ -807,28 +853,69 @@ public class ControlTransceiver extends Thread {
 			// If cloud leader has initiated this task,
 			// then this task will be used to download data from internet
 
-			if(nodeIsCL == true){
+			if(node_Type.equals("root_node")){
 
-				downloadFromURL(rxdata_dThread, ip_dThread, port_dThread);
+				CL_DThread(rxdata_dThread, ip_dThread, port_dThread);
+
+			}
+
+
+			else if(node_Type.equals("relay_node")){
+
+				relayNode_DThread(rxdata_dThread, ip_dThread, port_dThread);
 
 			}
 
 			// If cloud node has initiated this task,
 			// then this task will be used to download data from cloud leader
 
-			else if(nodeIsCL == false){
+			else if(node_Type.equals("child_node")){
 
-				downloadFromCL(rxdata_dThread, ip_dThread, port_dThread);
+				CNode_DThread(rxdata_dThread, ip_dThread, port_dThread);
 
 			}
 		}
 
 
-		private void downloadFromURL(JSONObject rxdata, String ip, int port){
+		private void CL_DThread(JSONObject rxdata, String ip, int port){
 
+			Log.d(TAG, "Cloud leader download thread");
+
+			// Unsorted battery values with IDs
+			Map<String, Integer> IDandBatVal = new HashMap<String, Integer>();
+
+			// Sorted battery values with IDs
+			Map<String, Integer> SortedIDBatVal = new HashMap<String, Integer>();
+
+			for (String id : ConfigData.getPeerIds()){
+
+				IDandBatVal.put(id, ConfigData.getPeer(id).getParamValue());		
+			}
+
+			SortedIDBatVal = Utilities.sortBatvals(IDandBatVal);
+
+			Map<String, JSONArray> Tdist_map = new HashMap<String, JSONArray>();
+
+			Tdist_map = Utilities.getTreeDistTable(SortedIDBatVal);
+
+
+
+			// Copying Cloud leader's immidiate child nodes
+			JSONArray ClChildNodes = new JSONArray();
+			String CLID = Utilities.getDeviceID();
+			ClChildNodes = Tdist_map.get(CLID);
+
+			// Removing CL data from distribution map
+			Tdist_map.remove(CLID);
+
+
+
+			// Initialization for URL download
 			int nBytes = 0;
 			long tBytes = 0;
 
+
+			// Initializing file path variables
 			File sdPath = null;
 			String fullPath = null;
 			//
@@ -845,56 +932,74 @@ public class ControlTransceiver extends Thread {
 			ArrayList<Socket> clientConnections = new ArrayList<Socket>();
 			//			ArrayList<OutputStream> clientOutputStreams = new ArrayList<OutputStream>();
 
+
+
+			// Now establishing connection with the URL site
 			try {
 
 				URL url = new URL(file_url);
 				URLConnection conection = url.openConnection();
+
+				//TODO move this later
 				conection.connect();
 
+				// Making file name in memory
 				String file_name = file_url.substring(file_url.lastIndexOf('/') + 1);
-
 				fullPath = ConfigData.getAppPath() +  "/" + file_name;
 				sdPath = new File(fullPath);
+
 
 				// getting file length
 				int totalBytes = conection.getContentLength();
 				Log.d(TAG, "total size in bytes = " + totalBytes);
 
 
-				// SEND MESSAGE TO ALL CN TO GET READY FOR DATA
-				//Now broadcast message to CN's
 
-				Map<String, Object> init_data_msg=new LinkedHashMap();
+				// Make metadata for requested file
 				JSONObject metadata = new JSONObject();
 				metadata.put("name", file_name);
 				metadata.put("mime", "file");
 				metadata.put("file_size", String.valueOf(totalBytes));
 
-				init_data_msg.put("msgType", "URL_FILE_RESP");
-				init_data_msg.put("clid", Utilities.getDeviceID());
-
-				//TODO check this one
-				init_data_msg.put("chunk_size", String.valueOf("1024"));
-				init_data_msg.put("metadata", metadata);
-				String jsondata = JSONValue.toJSONString(init_data_msg);
-
-				String localIP = Utilities.getLocalIP(true);
-				CtrlChannel.send(jsondata, ConfigData.getMcIP() , ConfigData.getMcPort());	
 
 
-				// Initialize new client sockets
+				// Sending to all the "PARENT" nodes
+				for(String key: Tdist_map.keySet()){
 
-				while(acceptCounter <= totalNeighbors){
+					Map<String, Object> dist_sync=new LinkedHashMap();
 
-					if(acceptCounter == totalNeighbors){
+					dist_sync.put("msgType", "CN_TREE_SYNC_REQ");
+					dist_sync.put("clid", Utilities.getDeviceID());
+					dist_sync.put("ParentNode", Utilities.getParentNode(key));
+					dist_sync.put("NumChildren", String.valueOf(ConfigData.relayNodes));
+					dist_sync.put("ChildNodes", Tdist_map.get(key));
+					dist_sync.put("chunk_size", String.valueOf("1024"));
+					dist_sync.put("metadata", metadata);
 
-						for(String id : neighborsIDset){
+					String jsondata = JSONValue.toJSONString(dist_sync);
 
+					String pn_ip = ConfigData.getPeer(key).getIP();
+					CtrlChannel.send(jsondata, pn_ip , port);
+
+				}
+
+				int numOfChildNodes = ClChildNodes.size();
+
+
+				// Wait for accept messsage from ONLY the immidiate neighbor nodes 
+
+				Log.d(TAG, "Starting While loop for parentCounter");
+				while(parentAcceptCounter <= numOfChildNodes){
+
+					if(parentAcceptCounter == numOfChildNodes){
+
+						for(int index=0; index < numOfChildNodes; index++){
+
+							// Initialize new client sockets
 							Socket clientSocket = new Socket();
 
 							// Connect to the server ip and port
-
-							String client_ip = ConfigData.getPeer(id).getIP();
+							String client_ip = ConfigData.getPeer((String) ClChildNodes.get(index)).getIP();
 
 							clientSocket.connect(new InetSocketAddress(client_ip, 5252), 5000);
 							//							os = clientSocket.getOutputStream();
@@ -902,10 +1007,12 @@ public class ControlTransceiver extends Thread {
 							clientConnections.add(clientSocket);
 							//							clientOutputStreams.add(os);
 
-							acceptCounter = totalNeighbors + 1;
+							parentAcceptCounter = numOfChildNodes + 1;
+							
 						}
 					}
 				}
+				Log.d(TAG, "While loop ended, All accept received");
 
 				// Send message to UI
 				//			long totalBytes = Integer.valueOf((String) metadata.get("file_size"));
@@ -923,7 +1030,7 @@ public class ControlTransceiver extends Thread {
 				// Output stream to write file
 				OutputStream output = new FileOutputStream(sdPath);
 
-				byte[] chunk_size = new byte[1024];
+				byte[] chunk_buff = new byte[1024];
 
 				int prev_perc = 0;
 				int curr_perc = 0;
@@ -931,7 +1038,7 @@ public class ControlTransceiver extends Thread {
 
 				//				os = clientSocket.getOutputStream();
 
-				while ((nBytes = input.read(chunk_size)) != -1) {
+				while ((nBytes = input.read(chunk_buff)) != -1) {
 
 					tBytes += nBytes;
 
@@ -944,7 +1051,7 @@ public class ControlTransceiver extends Thread {
 					for(int index = 0; index<clientConnections.size(); index++){
 
 						os = clientConnections.get(index).getOutputStream();
-						os.write(chunk_size, 0, nBytes);
+						os.write(chunk_buff, 0, nBytes);
 						//						clientOutputStreams.get(index).write(chunk_size, 0, nBytes);
 
 					}
@@ -964,11 +1071,14 @@ public class ControlTransceiver extends Thread {
 					}
 
 					// writing data to file
-					output.write(chunk_size, 0, nBytes);
+					output.write(chunk_buff, 0, nBytes);
 				}
 
 				// Clearing accept counter
-				acceptCounter = 0;
+				parentAcceptCounter = 0;
+
+				// Setting nodeType to null
+				nodeType = "";
 
 				// flushing output
 				output.flush();
@@ -1005,31 +1115,274 @@ public class ControlTransceiver extends Thread {
 				Log.e("Download Error: ", e.getMessage());
 			}
 			finally{
-				for(int index=0; index < clientConnections.size(); index++)
+				for(int index=0; index < clientConnections.size(); index++){
 					try {
 						clientConnections.get(index).close();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
+				}
 			}
 
 		}
 
 
-		private void downloadFromCL(JSONObject rxdata, String ip, int port){
+		private void relayNode_DThread(JSONObject rxdata, String ip, int port){
 
-			Log.d(TAG, "download from CL thread");
+			Log.d(TAG, "Parent node download thread");
 
+			// getting children info
+			JSONArray childNodes_array = (JSONArray) rxdata.get("ChildNodes");
+			int numCNodes = Integer.parseInt((String) rxdata.get("NumChildren"));
+			int numberOfChildren = Integer.valueOf((String) rxdata.get("NumChildren"));
+			
+			// getting parent node ID
+			String pNodeID = (String) rxdata.get("ParentNode");
+
+			// getting metadata of file
 			JSONObject metadata = (JSONObject) rxdata.get("metadata");
 			int chunk_size = Integer.valueOf((String) rxdata.get("chunk_size"));
 			String mime = (String)metadata.get("mime");
 			String file_name = (String)metadata.get("name");
+			int totalBytes = Integer.valueOf((String) metadata.get("file_size"));
 
-			int temp_totalBytes = Integer.valueOf((String) metadata.get("file_size"));
+			// output stream to write on the file
+			FileOutputStream out = null;
 
-			Log.d(TAG, "File_size: " + temp_totalBytes);
+			// Initializing path variables for the file
+			File sdPath = null;
+			String fullPath = null;
+			fullPath = ConfigData.getAppPath() +  "/" + file_name;
+			sdPath = new File(fullPath);
 
+			// Input stream for getting data from parent node
+			InputStream input_stream = null;
+
+			// Output stream to send data to child nodes
+			OutputStream output_stream = null;
+
+			// server socket to receive data from parent
+			ServerSocket serverSocket = null;
+
+			// sockets for send data to child nodes
+			Socket connectionSocket = null;
+
+			// array list to store child nodes (server) connections
+			ArrayList<Socket> clientConnections = new ArrayList<Socket>();
+
+			// setup buffer for incoming data from parent node
+			byte[] chunk_buff = new byte[1024];
+
+			int nBytes = 0;
+			long tBytes = 0;
+
+
+			// Sending message to all child nodes
+			for(int index=0; index<numCNodes; index++){
+
+				Map<String, Object> cNode_sync_msg=new LinkedHashMap();
+
+				cNode_sync_msg.put("msgType", "CHILD_NODE_SYNC_REQ");
+				cNode_sync_msg.put("cnid", Utilities.getDeviceID());
+				cNode_sync_msg.put("chunk_size", chunk_size);
+				cNode_sync_msg.put("metadata", metadata);
+				cNode_sync_msg.put("port", String.valueOf(5252));
+				String jsondata = JSONValue.toJSONString(cNode_sync_msg);
+
+				String cn_ip = ConfigData.getPeer((String) childNodes_array.get(index)).getIP();
+
+				CtrlChannel.send(jsondata, cn_ip , port);		
+
+			}
+
+			// making array list of connections to the child nodes (server) socket
+			try {
+
+				// Waiting for all the child nodes to accept
+
+				Log.d(TAG, "Starting While loop for childCounter");
+				while(childAcceptCounter <= numberOfChildren){
+
+					if(childAcceptCounter == numberOfChildren){
+
+						for(int index=0; index < childNodes_array.size(); index++){
+
+							Socket clientSocket = new Socket();
+
+							// Connect to the server ip and port
+							String client_ip = ConfigData.getPeer((String) childNodes_array.get(index)).getIP();
+
+							clientSocket.connect(new InetSocketAddress(client_ip, 5252), 5000);
+							//	os = clientSocket.getOutputStream();
+
+							clientConnections.add(clientSocket);
+							//	clientOutputStreams.add(os);
+
+							childAcceptCounter = numberOfChildren + 1;
+
+						}
+					}
+				}
+				Log.d(TAG, "While loop  ended");
+
+				// After receiving accept messages form all the child nodes
+				// Now Send message to Parent node to send file
+				Map<String, Object> init_data_msg=new LinkedHashMap();
+
+				init_data_msg.put("msgType", "CL_SEND_URL_FILE");
+				init_data_msg.put("cnid", Utilities.getDeviceID());
+				init_data_msg.put("chunk_size", String.valueOf(chunk_size));
+				init_data_msg.put("filename", file_name);
+				init_data_msg.put("port", String.valueOf(5252));
+				String jsondata = JSONValue.toJSONString(init_data_msg);
+
+				String pNodeIP = ConfigData.getPeer(pNodeID).getIP();
+				CtrlChannel.send(jsondata, pNodeIP , port);		
+
+				// Make new server socket to receive data from parent/cl node
+				serverSocket = new ServerSocket(5252);
+
+				// Accept the incomming connections from client socket
+				Log.d(TAG, "On accept condition");
+				connectionSocket = serverSocket.accept();
+				Log.d(TAG, "Connection accepted");
+
+
+				OutputStream output = new FileOutputStream(sdPath);
+
+				// Initialize input and output streams
+				input_stream = connectionSocket.getInputStream();
+				//				output_stream = connectionSocket.getOutputStream();
+
+
+				// Send message to UI
+				//			long totalBytes = Integer.valueOf((String) metadata.get("file_size"));
+				Message msg = handler.obtainMessage();
+				Bundle bundle = new Bundle();
+				bundle.putString("to", "UI");
+				bundle.putString("mtype", "FILE_START");
+				bundle.putLong("TOTAL_BYTES", totalBytes);
+				msg.setData(bundle);
+				handler.sendMessage(msg);
+
+
+				int prev_perc = 0;
+				int curr_perc = 0;
+
+				// Receive data
+				Log.d(TAG, "Starting Transfer : " + connectionSocket.toString());
+				//				os = clientSocket.getOutputStream();
+
+				while ((nBytes = input_stream.read(chunk_buff)) != -1) {
+
+					tBytes += nBytes;
+
+					//Log.d(TAG, "Bytes Received = " + String.valueOf(tBytes));
+
+					curr_perc = (int)((tBytes * 100) / totalBytes);
+
+					//Log.d(TAG, "Download % = " + String.valueOf(curr_perc));
+
+					for(int index = 0; index < clientConnections.size(); index++){
+
+						output_stream = clientConnections.get(index).getOutputStream();
+						output_stream.write(chunk_buff, 0, nBytes);
+						//						clientOutputStreams.get(index).write(chunk_size, 0, nBytes);
+					}
+
+					if (curr_perc != prev_perc){
+						Log.d(TAG, "Download % = " + String.valueOf(curr_perc));
+
+						msg = handler.obtainMessage();
+						bundle = new Bundle();
+						bundle.putString("to", "UI");
+						bundle.putString("mtype", "FILE_PROGRESS");
+						bundle.putInt("CURRENT_BYTES", curr_perc);
+						msg.setData(bundle);
+						handler.sendMessage(msg);
+
+						prev_perc = curr_perc;
+					}
+
+					// writing data to file
+					output.write(chunk_buff, 0, nBytes);
+				}
+
+				// Clearing accept counter
+				childAcceptCounter = 0;
+
+				// Setting nodeType to null
+				nodeType = "";
+
+				// flushing output
+				output.flush();
+				output_stream.flush();
+
+				// closing streams
+				output.close();
+				input_stream.close();
+				output_stream.close();
+
+				Log.d(TAG, "Total Bytes Received = " + String.valueOf(tBytes));
+
+				msg = handler.obtainMessage();
+				bundle = new Bundle();
+				bundle.putString("to", "UI");
+				bundle.putString("mtype", "FILE_END");
+				bundle.putString("path", file_name);
+
+				msg.setData(bundle);
+				handler.sendMessage(msg);
+
+			}
+
+			catch (SocketException  e) {
+				e.printStackTrace();
+				Log.e("SocketException Error: ", e.getMessage());
+			}
+			catch (IOException  e) {
+				e.printStackTrace();
+				Log.e("IOException Error: ", e.getMessage());
+			}
+			catch (Exception e) {
+				e.printStackTrace();
+				Log.e("Exception Error: ", e.getMessage());
+			}
+			
+			
+			finally{
+				for(int index=0; index < clientConnections.size(); index++){
+					try {
+						clientConnections.get(index).close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+
+		}
+
+
+
+		private void CNode_DThread(JSONObject rxdata, String ip, int port){
+
+			Log.d(TAG, "Child node download thread");
+
+			// getting metadata for the file
+			JSONObject metadata = (JSONObject) rxdata.get("metadata");
+			//TODO check this and fix it !!!!
+			int chunk_size = 1024;
+			//			int chunk_size = Integer.valueOf((String) rxdata.get("chunk_size"));
+			String mime = (String)metadata.get("mime");
+			String file_name = (String)metadata.get("name");
+
+			//			int temp_totalBytes = Integer.valueOf((String) metadata.get("file_size"));
+			//
+			//			Log.d(TAG, "File_size: " + temp_totalBytes);
+
+			// sending message to UI to setup
 			if ("file".equals(mime)){
 
 				// Send message to UI
@@ -1042,17 +1395,26 @@ public class ControlTransceiver extends Thread {
 				msg.setData(bundle);
 				handler.sendMessage(msg);
 
-
+				// Initializing output stream to write on the file
 				FileOutputStream out = null;
-				ServerSocket serverSocket = null;
-				Socket connectionSocket = null;
-				InputStream is = null;
-				OutputStream os = null;
-				byte[] chunk = new byte[chunk_size];
-				int nBytes = 0;
-				long tBytes = 0;
 				File sdPath = null;
 				String fullPath = null;
+
+				// setting up server socket to receive data from parent node
+				ServerSocket serverSocket = null;
+				Socket connectionSocket = null;
+
+				// initializing input stream to to get data form parent (client) connection
+				InputStream input_stream = null;
+				//				OutputStream os = null;
+
+				// input buffer as per chunk size
+				byte[] chunk_buff = new byte[chunk_size];
+
+				int nBytes = 0;
+				long tBytes = 0;
+
+				// try to make file
 				try {
 					fullPath = ConfigData.getAppPath() +  "/" + file_name;
 					sdPath = new File(fullPath);
@@ -1063,19 +1425,18 @@ public class ControlTransceiver extends Thread {
 					e1.printStackTrace();
 				}  
 
+				// sending accept message to parent node to send data
 				try {
 
-					//Now Send message to CL to send file
-
+					//Now Send message to Parent node to send file
 					Map<String, Object> init_data_msg=new LinkedHashMap();
 
 					init_data_msg.put("msgType", "CL_SEND_URL_FILE");
 					init_data_msg.put("cnid", Utilities.getDeviceID());
 					init_data_msg.put("chunk_size", String.valueOf(chunk_size));
 					init_data_msg.put("filename", file_name);
-					init_data_msg.put("port", String.valueOf(ConfigData.getDataPort()));
+					init_data_msg.put("port", String.valueOf(5252));
 					String jsondata = JSONValue.toJSONString(init_data_msg);
-
 
 					CtrlChannel.send(jsondata, ip , port);		
 
@@ -1083,20 +1444,24 @@ public class ControlTransceiver extends Thread {
 					serverSocket = new ServerSocket(5252);
 
 					// Accept the incomming clnnections from client socket
+					// thread will be paused until the client sends connection request
+					Log.d(TAG, "On accept condition");
 					connectionSocket = serverSocket.accept();
+					Log.d(TAG, "Connection accepted");
 
-					// Initialize input and output streams
-					is = connectionSocket.getInputStream();
-					os = connectionSocket.getOutputStream();
+					// getting input and output streams
+					input_stream = connectionSocket.getInputStream();
+					//					os = connectionSocket.getOutputStream();
 
 					int prev_perc = 0;
 					int curr_perc = 0;
+
 					// Receive data
 					Log.d(TAG, "Starting Transfer : " + connectionSocket.toString());
 
-					while ((nBytes = is.read(chunk)) != -1){
+					while ((nBytes = input_stream.read(chunk_buff)) != -1){
 
-						out.write(chunk, 0, nBytes);
+						out.write(chunk_buff, 0, nBytes);
 						tBytes += nBytes;
 						//Log.d(TAG, "Bytes Received = " + String.valueOf(tBytes));
 
@@ -1126,10 +1491,13 @@ public class ControlTransceiver extends Thread {
 				}
 				finally{
 					try {
-						is.close();
+						input_stream.close();
 						out.close();
 						connectionSocket.close();
 						serverSocket.close();
+
+						// Setting nodeType to null
+						nodeType = "";
 
 					} catch (IOException e) {
 
@@ -1154,7 +1522,6 @@ public class ControlTransceiver extends Thread {
 		}
 
 	}
-
 
 
 	////////////////////////////////////////////////////////////////////////////////////

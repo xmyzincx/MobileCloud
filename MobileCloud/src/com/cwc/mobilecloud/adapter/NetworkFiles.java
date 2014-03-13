@@ -139,7 +139,7 @@ public class NetworkFiles extends Fragment {
 		listDataChild = new HashMap<String, List<String>>();
 		int j = 0;
 
-		Log.d(TAG, "prepare method called");
+//		Log.d(TAG, "prepare method called");
 
 		//for printing contents on all the peers
 		for (String id : ConfigData.getPeerIds()){
