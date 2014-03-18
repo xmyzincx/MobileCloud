@@ -57,6 +57,8 @@ public final class Utilities {
 
 	private static Map<String, String> childParentTable = new HashMap<String, String>();
 
+	private static Tree<String> nodes_tree;
+
 	private static ReadWriteLock batteryLock = new ReentrantReadWriteLock();
 
 
@@ -291,16 +293,18 @@ public final class Utilities {
 	}
 
 
-	public static Map<String, JSONArray> getTreeDistTable(Map<String, Integer> SortedIDBatVal){
+	// The ID list should be sorted in decending order before making tree
+	public static Map<String, JSONArray> getTreeDistTable(ArrayList<String> idList){
 
-		String[] idList = SortedIDBatVal.keySet().toArray(new String[0]);
+		//		String[] idList = SortedIDBatVal.keySet().toArray(new String[0]);
 		String pNodeID = null;
 		JSONArray cNodesArray = null;
 		childParentTable.clear();
 
 		boolean limit_reached =  false;
 
-		int nodes_limit = idList.length;
+		int nodes_limit;
+
 		int main_index = 0;
 		int multiplier = 1;
 		int nodesMultiple = -(ConfigData.relayNodes);
@@ -308,8 +312,20 @@ public final class Utilities {
 		int parent_limit = 0;
 		int nodes_counter = 0;
 
-		TreeNode<String> root_node = new TreeNode<String>(Utilities.getDeviceID());
-		Tree<String> nodes_tree = new Tree<String>();
+		// First element of the array will always be of cloud leader
+		TreeNode<String> root_node = new TreeNode<String>(idList.get(0));
+
+		// removing the top node (i.e. the cloud leader) in order to
+		// synchronise with the old algorithm. Modify later
+		//		Log.d(TAG, "nodes limit before removing: " + idList.size());
+		idList.remove(0);
+		//		idList.trimToSize();
+		//		Log.d(TAG, "nodes limit after removing: " + idList.size());
+
+		nodes_limit = idList.size();
+
+
+		nodes_tree = new Tree<String>();
 		TreeNode<String> parent_node;
 
 		List<TreeNode<String>> previous_nodes_list = new ArrayList<TreeNode<String>>();
@@ -333,8 +349,8 @@ public final class Utilities {
 				previous_index = parent_limit;
 			}
 
-			//			Log.d(DTAG, "parent_limit: " + parent_limit);
-			//			Log.d(DTAG, "previous_index: " + previous_index);
+			//			Log.d(TAG, "parent_limit: " + parent_limit);
+			//			Log.d(TAG, "previous_index: " + previous_index);
 
 			for(int i = main_index; i < parent_limit; i++){
 
@@ -349,19 +365,21 @@ public final class Utilities {
 
 					for(int j = 0; j < child_limit; j++){
 
+						//						Log.d(TAG, "nodes limit: " + nodes_limit);
 						if(nodes_counter < nodes_limit){
 
 							//							Log.d(DTAG, "ids from list: " + idList[j + nodesMultiple + ConfigData.relayNodes]);
-
-							TreeNode<String> child_node = new TreeNode<String>(idList[j + nodesMultiple + ConfigData.relayNodes]);
+							//							Log.d(TAG, "j: " + j + " nodesMultiple: " + nodesMultiple + " relay nodes: " + ConfigData.relayNodes);
+							TreeNode<String> child_node = new TreeNode<String>(idList.get(j + nodesMultiple + ConfigData.relayNodes));
 							parent_node.addChild(child_node);
 							temp_list.add(child_node);
 							String cNodeID = child_node.getData();
 							cNodesArray.add(cNodeID);
+							//							Log.d(TAG, "child node id: " + cNodeID + " parent node id" + pNodeID);
 							childParentTable.put(cNodeID, pNodeID);
 							nodes_counter++;
 
-							//							Log.d(DTAG, "Counter: " + nodes_counter);
+							//							Log.d(TAG, "Counter: " + nodes_counter);
 						}
 
 						else{
@@ -378,7 +396,7 @@ public final class Utilities {
 
 					if(!cNodesArray.isEmpty() && cNodesArray!=null){
 						dist_table.put(pNodeID, cNodesArray);
-						Log.d(TAG, "pNodeID: " + pNodeID + " cNodesArray" + cNodesArray.toString());
+						//						Log.d(TAG, "pNodeID: " + pNodeID + " cNodesArray" + cNodesArray.toString());
 					}
 					//					Log.d(DTAG, "Parent Node " + pNodeID + ": " + "Children nodes: " + cNodesArray.toString());
 				}
@@ -398,7 +416,7 @@ public final class Utilities {
 		}
 
 		nodes_tree.setRoot(root_node);
-		Log.d(TAG, "number of nodes in the tree: " + nodes_tree.getNumberOfNodes());
+		//		Log.d(TAG, "number of nodes in the tree: " + nodes_tree.getNumberOfNodes());
 
 		//		for(String key : dist_table.keySet()){
 		//			
@@ -413,8 +431,9 @@ public final class Utilities {
 	public static String getParentNode(String node){
 
 		String parent = null;
-		
+
 		parent = childParentTable.get(node);
+		//		Log.d(TAG, "Parent Node: " + parent);
 
 		return parent;
 	}
