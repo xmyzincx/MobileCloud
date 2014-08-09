@@ -8,8 +8,6 @@ import java.util.Timer;
 import com.cwc.mobilecloud.ConfigData;
 import com.cwc.mobilecloud.ControllerService;
 import com.cwc.mobilecloud.MainActivity.AsyncAppInit;
-import com.cwc.mobilecloud.adapter.ActivityCommunicator;
-import com.cwc.mobilecloud.adapter.FragmentCommunicator;
 import com.cwc.mobilecloud.adapter.NetworkFiles;
 import com.cwc.mobilecloud.adapter.TabsPagerAdapter;
 import com.cwc.mobilecloud.utilities.Constants;

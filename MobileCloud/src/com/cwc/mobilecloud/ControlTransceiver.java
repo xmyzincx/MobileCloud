@@ -17,7 +17,9 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -48,6 +50,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.telephony.TelephonyManager;
 import android.text.style.ClickableSpan;
 import android.util.Config;
 import android.util.Log;
@@ -74,6 +77,10 @@ public class ControlTransceiver extends Thread {
 	private volatile int childAcceptCounter = 0;
 
 
+	private Calendar calendar;
+	private SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:yyyy HH:mm:ss");
+
+	private TelephonyManager tm;
 
 	ControlTransceiver(Context c, Handler h){
 		context = c;
@@ -164,6 +171,9 @@ public class ControlTransceiver extends Thread {
 			// Process Received Message //
 
 			msgHandler(obj, receivePacket.getAddress().getHostAddress(), receivePacket.getPort());
+
+//			//For logging RSSI in text file..
+//			Utilities.phoneStateSetup(context);
 
 		}
 	}
@@ -299,6 +309,8 @@ public class ControlTransceiver extends Thread {
 		CtrlChannel.send(jsondata, ip, port);
 		//		Log.d(TAG, "sent to IP: " + ip + " on port: " + port);
 
+//		Utilities.timeStamp();
+//		Utilities.phoneStateSetup(context);
 	}
 
 
@@ -420,6 +432,8 @@ public class ControlTransceiver extends Thread {
 			handler.sendMessage(msg);
 		}
 
+//		Utilities.timeStamp();
+//		Utilities.stopPhoneStateListener();
 	}
 
 
@@ -509,13 +523,12 @@ public class ControlTransceiver extends Thread {
 	}
 
 
-
 	private void handle_cn_tree_sync_req(JSONObject rxdata, String ip, int port){
 
 		Log.d(TAG, "CN_TREE_SYNC_REQ mesg received");
-		
+
 		int treeWidth = (Integer) Integer.valueOf((String) rxdata.get("TreeWidth"));
-		
+
 		// Setting the tree width
 		ConfigData.setRelayNodes(treeWidth);
 
@@ -560,7 +573,6 @@ public class ControlTransceiver extends Thread {
 		}
 
 	}
-
 
 
 	private void handle_cl_send_url_file(JSONObject rxdata, String ip, int port){
@@ -1073,7 +1085,25 @@ public class ControlTransceiver extends Thread {
 
 
 				//				os = clientSocket.getOutputStream();
+				
+				// Node type for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Node type                     : Cloud leader");
 
+				// Battery level of the node
+				Utilities.generateTestingResults(Constants.test_result_file, "Battery level                 : " + Utilities.getBatVal().toString());
+				
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+				
+				// getting Mobile Network RSSi for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Cellular RSSI                 : " + Utilities.getCellularRSSI() + " dBm");
+				
+				// file size for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+				
+				// timestamping for starting main content downloading
+				Utilities.timeStamp("Starting to download content ");
+				
 				while ((nBytes = input.read(chunk_buff)) != -1) {
 
 					tBytes += nBytes;
@@ -1109,6 +1139,17 @@ public class ControlTransceiver extends Thread {
 					// writing data to file
 					output.write(chunk_buff, 0, nBytes);
 				}
+				
+				// timestamping for ending main content downloading
+				Utilities.timeStamp("Content downloading ended    ");
+				
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+				
+				// getting Mobile Network RSSi for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "MN RSSI                       : " + Utilities.getCellularRSSI() + " dBm");
+				
+				Utilities.generateTestingResults(Constants.test_result_file, "-----------END-----------");
 
 				// Clearing accept counter
 				parentAcceptCounter = 0;
@@ -1287,6 +1328,21 @@ public class ControlTransceiver extends Thread {
 				Log.d(TAG, "Starting Transfer : " + connectionSocket.toString());
 				//				os = clientSocket.getOutputStream();
 
+				// Node type for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Node type                     : Cloud node");
+				
+				// Battery level of the node
+				Utilities.generateTestingResults(Constants.test_result_file, "Battery level                 : " + Utilities.getBatVal().toString());
+				
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+				
+				// file size for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+				
+				// timestamping for starting main content downloading
+				Utilities.timeStamp("Starting to download content ");
+				 
 				while ((nBytes = input_stream.read(chunk_buff)) != -1) {
 
 					tBytes += nBytes;
@@ -1321,6 +1377,14 @@ public class ControlTransceiver extends Thread {
 					// writing data to file
 					output.write(chunk_buff, 0, nBytes);
 				}
+				
+				// timestamping for ending main content downloading
+				Utilities.timeStamp("Content downloading ended    ");
+				
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+				
+				Utilities.generateTestingResults(Constants.test_result_file, "-----------END-----------");
 
 				// Clearing accept counter
 				childAcceptCounter = 0;
@@ -1444,7 +1508,6 @@ public class ControlTransceiver extends Thread {
 				// sending accept message to parent node to send data
 				try {
 
-
 					//Now Send message to Parent node to send file
 					Map<String, Object> init_data_msg=new LinkedHashMap();
 
@@ -1479,6 +1542,21 @@ public class ControlTransceiver extends Thread {
 
 					// Receive data
 					Log.d(TAG, "Starting Transfer : " + connectionSocket.toString());
+					
+					// Node type for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Node type                     : Cloud node");
+					
+					// Battery level of the node
+					Utilities.generateTestingResults(Constants.test_result_file, "Battery level                 : " + Utilities.getBatVal().toString());
+					
+					// getting Wifi RSSI for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+					
+					// file size for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+					
+					// timestamping for starting main content downloading
+					Utilities.timeStamp("Starting to download content");
 
 					while ((nBytes = input_stream.read(chunk_buff)) != -1){
 
@@ -1505,6 +1583,14 @@ public class ControlTransceiver extends Thread {
 							prev_perc = curr_perc;
 						}
 					}
+					
+					// timestamping for ending main content downloading
+					Utilities.timeStamp("Content downloading ended");
+					
+					// getting Wifi RSSI for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+					
+					Utilities.generateTestingResults(Constants.test_result_file, "-----------END-----------");
 
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

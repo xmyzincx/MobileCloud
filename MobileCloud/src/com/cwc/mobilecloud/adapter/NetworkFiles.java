@@ -41,7 +41,6 @@ public class NetworkFiles extends Fragment {
 
 	private static final String TAG = "Network files adapter";
 	private TextProgressBar progressBar;
-	private ActivityCommunicator activityCommunicator;
 	private Button DLButton;
 	private EditText URLTextBox;
 	public Context context;

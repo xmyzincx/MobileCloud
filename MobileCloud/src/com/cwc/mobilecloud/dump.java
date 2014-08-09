@@ -22,6 +22,15 @@ import org.json.simple.JSONValue;
 
 import android.os.Bundle;
 import android.os.Message;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellSignalStrengthCdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
 import android.util.Log;
 
 import com.cwc.mobilecloud.utilities.Tree;
@@ -598,6 +607,82 @@ public class dump {
 ////		Log.d(DTAG, "Parent Node " + (String) key + ": " + "Children nodes: " + dist_table.get(key).toString());
 ////		
 ////	}
+	
+//	
+//	
+//	
+//	String NetTypeStr = null;
+//    final TelephonyManager tm;
+//	try {
+//	    tm = (TelephonyManager) this.getSystemService(Context.TELEPHONY_SERVICE);
+//	    
+//	    private void phoneStateSetup(){
+//	    final PhoneStateListener myPhoneStateListener = new PhoneStateListener() {
+//	    	public void onSignalStrengthsChanged(SignalStrength signalStrength){
+//	    		int rssi = signalStrength.getCdmaDbm();
+//	    		Log.d(TAG, "RSSI: " + rssi);
+//	    	}
+//	    	
+//	    	try{
+//	    	     tm.listen(myPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION
+//	    	          | PhoneStateListener.LISTEN_DATA_ACTIVITY
+//	    	          | PhoneStateListener.LISTEN_DATA_CONNECTION_STATE
+//	    	          | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
+//	    	          | PhoneStateListener.LISTEN_CALL_STATE);
+//	    	 }catch(Exception e){
+//
+//	    	 }
+//	    };
+//	    
+//	    phoneStateSetup();
+//	    
+//
+//	    switch(tm.getNetworkType()){
+//	     case 0: NetTypeStr = ""; break;
+//	     case 1: NetTypeStr = "GPRS"; break;
+//	     case 2: NetTypeStr = "EDGE"; break;
+//	      case 3: NetTypeStr = "UMTS"; break;
+//	      case 4: NetTypeStr = "CDMA"; break;
+//	      case 5: NetTypeStr = "EVDO_0"; break;
+//	      case 6: NetTypeStr = "EVDO_A"; break;
+//	      case 7: NetTypeStr = "1xRTT"; break;
+//	      case 8: NetTypeStr = "HSDPA"; break;
+//	      case 9: NetTypeStr = "HSUPA"; break;
+//	      case 10: NetTypeStr = "HSPA"; break;
+//	      case 11: NetTypeStr = "iDen"; break;
+//	      case 12: NetTypeStr = "EVDO_B"; break;
+//	      case 13: NetTypeStr = "LTE"; break;
+//	      case 14: NetTypeStr = "eHRPD"; break;
+//	     case 15: NetTypeStr = "HSPA+"; break;
+//	    }
+//	    
+//	    Log.d(TAG, "NetTypeStr: " + NetTypeStr);
+//	    
+//	    
+//	    List<CellInfo> cinfo = tm.getAllCellInfo();
+//	    Log.d(TAG, "cinfo: " + cinfo);
+//	    
+//	    for (final CellInfo info : tm.getAllCellInfo()) {
+//		    Log.d(TAG, "check3");
+//	        if (info instanceof CellInfoGsm) {
+//	            final CellSignalStrengthGsm gsm = ((CellInfoGsm) info).getCellSignalStrength();
+//				Log.d(TAG, "GSM: " + String.valueOf(gsm.getDbm()));
+//	            // do what you need
+//	        } else if (info instanceof CellInfoCdma) {
+//	            final CellSignalStrengthCdma cdma = ((CellInfoCdma) info).getCellSignalStrength();
+//	            Log.d(TAG, "CDMA: " + String.valueOf(cdma.getDbm()));
+//	            // do what you need
+//	        } else if (info instanceof CellInfoLte) {
+//	            final CellSignalStrengthLte lte = ((CellInfoLte) info).getCellSignalStrength();
+//	            Log.d(TAG, "LTE: " + String.valueOf(lte.getDbm()));
+//	            // do what you need
+//	        } else {
+//	            throw new Exception("Unknown type of cell signal!");
+//	        }
+//	    }
+//	} catch (Exception e) {
+//	    Log.e(TAG, "Unable to obtain cell signal information", e);
+//	}		
 
 
 }

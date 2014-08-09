@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Dictionary;
@@ -40,8 +42,12 @@ import com.cwc.mobilecloud.utilities.Utilities.Mode;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Environment;
+import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 public final class Utilities {
@@ -60,6 +66,20 @@ public final class Utilities {
 	private static Tree<String> nodes_tree;
 
 	private static ReadWriteLock batteryLock = new ReentrantReadWriteLock();
+	
+	private static ReadWriteLock rssiLock = new ReentrantReadWriteLock();
+	
+	private static PhoneStateListener myPhoneStateListener;
+	
+	private static TelephonyManager tm;
+	
+	private static String data2Write;
+	
+	private static Calendar calendar;
+	
+	private static int RSSI;
+	
+	private static SimpleDateFormat sdf = new SimpleDateFormat("dd:MM:yyyy HH:mm:ss");
 
 
 	public static BroadcastReceiver mBatInfoReceiver = new BroadcastReceiver(){
@@ -499,6 +519,81 @@ public final class Utilities {
 			e.printStackTrace();
 			Log.e(TAG, "Failed to write: " + e.toString());
 		}
+	}
+	
+	
+	public static void phoneStateSetup(Context context){
+		
+		tm  = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+		
+		myPhoneStateListener = new PhoneStateListener() {
+			
+			public void onSignalStrengthsChanged(SignalStrength signalStrength){	
+				Lock l = rssiLock.writeLock();
+				l.lock();
+				try {
+					int rssi_gsm = -113 + (2 * signalStrength.getGsmSignalStrength());
+					Log.d(TAG, "RSSI GSM: " + rssi_gsm);
+					RSSI = rssi_gsm;
+				}
+				finally{
+					l.unlock();
+				}
+
+//				data2Write = "RSSI: " + rssi_gsm;
+//				Utilities.generateTestingResults("COIN_RESULT.txt", data2Write);
+//				int rssi_cdma = signalStrength.getCdmaDbm();
+//				Log.d(TAG, "RSSI CDMA: " + rssi_cdma);
+//				int rssi_evdo = signalStrength.getEvdoDbm();
+//				Log.d(TAG, "RSSI EVDO: " + rssi_evdo);
+			}
+		};
+
+		try{
+			tm.listen(myPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION
+					| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS
+					);
+		}catch(Exception e){
+
+		}
+	}
+	
+	public static int getCellularRSSI(){
+		Lock l = rssiLock.readLock();
+		l.lock();
+		try {
+			return RSSI;
+		} finally {
+			l.unlock();
+		}
+	}
+	
+	public static void stopPhoneStateListener(){
+		
+		try{
+			 if(myPhoneStateListener != null){tm.listen(myPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
+			}catch(Exception e){
+			 e.printStackTrace();
+			}	
+	}
+	
+	public static void timeStamp(String ref){
+		
+		calendar = Calendar.getInstance();
+		int milisec = calendar.get(Calendar.MILLISECOND);
+		String timestamp = ref + " : " + sdf.format(calendar.getTime()) + ":" + milisec;
+		//		Log.d(TAG, "Time Stamp: " + timestamp);
+		Utilities.generateTestingResults("COIN_RESULT.txt", timestamp);
+		
+	}
+	
+	
+	public static int getWifiRSSI(Context context){
+		int wifi_rssi = 0;
+		WifiManager wifi = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		wifi_rssi = wifi.getConnectionInfo().getRssi();
+		
+		return wifi_rssi;
 	}
 
 

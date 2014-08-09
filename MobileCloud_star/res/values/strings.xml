@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MobileCloud_star</string>
+    <string name="action_settings">Settings</string>
+    <string name="title_section1">Network Files</string>
+    <string name="title_section2">Node Files</string>
+    <string name="title_section3">Streaming</string>
+    <string name="menu_facility">Cloud Node</string>
+    <string name="menu_battery">Battery: </string>
+    <string name="controller_service_name">ControllerService</string>
+    <string name="SiteURL">Site URL: </string>
+    <string name="downloadButton">Download via CL</string>
+
+</resources>

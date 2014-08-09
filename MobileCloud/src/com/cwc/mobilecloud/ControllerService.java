@@ -1,7 +1,9 @@
 package com.cwc.mobilecloud;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -36,7 +38,18 @@ import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.util.Config;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellLocation;
+import android.telephony.CellSignalStrengthCdma;
+import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.PhoneStateListener;
+import android.telephony.ServiceState;
+import android.telephony.SignalStrength;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -60,8 +73,6 @@ public class ControllerService extends Service {
 	private Context appCtx;
 
 	private Handler CTRXHandler;
-
-
 
 	/***************************************************/
 
@@ -184,8 +195,10 @@ public class ControllerService extends Service {
 		Log.d(TAG, "Starting CL selection thread");
 		CLThread = new CLSelecThread(ctx, handler);
 		CLThread.start();
-
-		//		Utilities.generateTestingResults("Test_Results1.txt", "abdul moiz");
+		
+		Utilities.phoneStateSetup(ctx);
+		
+		Utilities.generateTestingResults(Constants.test_result_file, Utilities.getDeviceID());
 
 	}
 
@@ -197,6 +210,7 @@ public class ControllerService extends Service {
 		CLThread.interrupt();
 		ConfigData.CtrlSock.close();
 		ConfigData.NLog.close();
+		Utilities.stopPhoneStateListener();
 	}
 
 	/***** Interface Methods ******/
@@ -230,6 +244,7 @@ public class ControllerService extends Service {
 			Log.v(TAG, "Error in sending CN_DISCOVERY_REQ Message");
 		}
 
+		
 		ConfigData.updatePeersAge();
 
 		// "Send CN_INFO message to BS" ---> Moved to Dump
@@ -298,6 +313,9 @@ public class ControllerService extends Service {
 				Log.d(TAG, "Sending file request to node: " + file_on_IP + " on Port: " + ConfigData.getMcPort());
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
+				
+				Utilities.timeStamp("Local Content request sent   ");
+			
 			}
 
 
@@ -327,6 +345,8 @@ public class ControllerService extends Service {
 				Log.d(TAG, "Sending file request to node: " + file_on_IP + " on Port: " + ConfigData.getMcPort());
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
+				
+				Utilities.timeStamp("URL Content request sent     ");
 
 			}
 

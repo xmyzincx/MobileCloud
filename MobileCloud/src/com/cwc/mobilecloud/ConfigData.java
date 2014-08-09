@@ -49,7 +49,7 @@ public final class ConfigData {
 	public static NetLog NLog;						// Logging Server
 
 	// This will define the width of the tree
-	public static int relayNodes = 2;					// Number of relay nodes
+	public static int relayNodes = 3;					// Number of relay nodes
 
 	public class AppConstant{
 		public static final int CN_INFO_TIMEOUT = 10;		// seconds
