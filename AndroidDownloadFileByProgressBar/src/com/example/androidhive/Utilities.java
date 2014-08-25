@@ -1,4 +1,4 @@
-package com.cwc.mobilecloud_star.utilities;
+package com.example.androidhive;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,7 +32,7 @@ import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
-import com.cwc.mobilecloud_star.utilities.Shell.ShellException;
+import com.example.androidhive.Shell.ShellException;
 
 public final class Utilities {
 
@@ -114,10 +114,10 @@ public final class Utilities {
 	}
 
 
-	public static String getDeviceID(){
-		return android.os.Build.MANUFACTURER + android.os.Build.HARDWARE + android.os.Build.DEVICE + android.os.Build.ID + android.os.Build.SERIAL;
-
-	}
+//	public static String getDeviceID(){
+//		return android.os.Build.MANUFACTURER + android.os.Build.HARDWARE + android.os.Build.DEVICE + android.os.Build.ID + android.os.Build.SERIAL;
+//
+//	}
 
 
 

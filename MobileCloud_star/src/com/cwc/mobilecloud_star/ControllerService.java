@@ -167,8 +167,12 @@ public class ControllerService extends Service {
 		Log.d(TAG, "Starting CL selection thread");
 		CLThread = new CLSelecThread(ctx, handler);
 		CLThread.start();
-		
-//		Utilities.generateTestingResults("Test_Results1.txt", "abdul moiz");
+
+		Utilities.phoneStateSetup(ctx);
+
+		Utilities.generateTestingResults(Constants.test_result_file, Utilities.getDeviceID());
+
+		//		Utilities.generateTestingResults("Test_Results1.txt", "abdul moiz");
 
 	}
 
@@ -180,6 +184,7 @@ public class ControllerService extends Service {
 		CLThread.interrupt();
 		ConfigData.CtrlSock.close();
 		ConfigData.NLog.close();
+		Utilities.stopPhoneStateListener();
 	}
 
 	/***** Interface Methods ******/
@@ -258,11 +263,11 @@ public class ControllerService extends Service {
 		@Override
 		protected Void doInBackground(Void... params) {
 			// TODO Auto-generated method stub
-			
+
 			if(asyncBundle.get("requestType").equals(Constants.request_file)){
-				
+
 				//send message to cl or node that has the required file
-				
+
 				Map<String, Object> init_data_msg=new LinkedHashMap();
 
 				Log.d(TAG, "data initializing trigger");
@@ -282,17 +287,17 @@ public class ControllerService extends Service {
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
 			}
-			
-			
+
+
 			else if(asyncBundle.get("requestType").equals(Constants.request_url)){
-				
+
 				//send message to CL for URL request
 				Log.d(TAG, "requesting CL to get file from URL ");
-				
+
 				String file_req = (String) asyncBundle.get("file");
 
 				String file_on_IP = (String) asyncBundle.get("sourceIP");
-				
+
 				//send message to cl or node that has the required file
 				Map<String, Object> url_req_msg=new LinkedHashMap();
 
@@ -310,9 +315,9 @@ public class ControllerService extends Service {
 				Log.d(TAG, "Sending file request to node: " + file_on_IP + " on Port: " + ConfigData.getMcPort());
 
 				ConfigData.CtrlSock.send(jsondata, file_on_IP , ConfigData.getMcPort());
-				
+
 			}
-			
+
 			return null;
 		}
 	}

@@ -54,8 +54,6 @@ public class ControlTransceiver extends Thread {
 
 	private volatile int acceptCounter = 0;
 
-
-
 	ControlTransceiver(Context c, Handler h){
 		context = c;
 
@@ -822,8 +820,8 @@ public class ControlTransceiver extends Thread {
 
 			File sdPath = null;
 			String fullPath = null;
-//
-//			Socket clientSocket = null;
+			//
+			//			Socket clientSocket = null;
 
 			String file_url = (String) rxdata.get("url");
 
@@ -886,22 +884,22 @@ public class ControlTransceiver extends Thread {
 					if(acceptCounter == totalNeighbors){
 
 						for(String id : neighborsIDset){
-							
+
 							Socket clientSocket = new Socket();
 
 							Log.d(TAG, "if condition");
 							// Connect to the server ip and port
-							
+
 							String client_ip = ConfigData.getPeer(id).getIP();
-							
+
 							clientSocket.connect(new InetSocketAddress(client_ip, 5252), 5000);
 							os = clientSocket.getOutputStream();
-							
+
 							clientConnections.add(clientSocket);
 							clientOutputStreams.add(os);
-							
+
 							Log.d(TAG, "if condition passed");	
-							
+
 							acceptCounter = totalNeighbors + 1;
 						}
 					}
@@ -931,8 +929,28 @@ public class ControlTransceiver extends Thread {
 				int prev_perc = 0;
 				int curr_perc = 0;
 
+				// Node type for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Node type                     : Cloud leader");
 
-//				os = clientSocket.getOutputStream();
+				// Battery level of the node
+				Utilities.generateTestingResults(Constants.test_result_file, "Battery level                 : " + Utilities.getBatVal().toString());
+
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+
+				// getting Mobile Network RSSi for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Cellular RSSI                 : " + Utilities.getCellularRSSI() + " dBm");
+
+				// file size for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+				
+				// content distribution topology
+				Utilities.generateTestingResults(Constants.test_result_file, "Content distribution topology : Star");
+
+				// timestamping for starting main content downloading
+				Utilities.timeStamp("Starting to download content ");
+
+				//				os = clientSocket.getOutputStream();
 
 				while ((nBytes = input.read(chunk_size)) != -1) {
 
@@ -943,13 +961,13 @@ public class ControlTransceiver extends Thread {
 					curr_perc = (int)((tBytes * 100) / totalBytes);
 
 					//Log.d(TAG, "Download % = " + String.valueOf(curr_perc));
-					
+
 					for(int index = 0; index<clientConnections.size(); index++){
-						
-//						os = clientConnections.get(index).getOutputStream();
-//						os.write(chunk_size, 0, nBytes);
+
+						//						os = clientConnections.get(index).getOutputStream();
+						//						os.write(chunk_size, 0, nBytes);
 						clientOutputStreams.get(index).write(chunk_size, 0, nBytes);
-						
+
 					}
 
 
@@ -971,9 +989,20 @@ public class ControlTransceiver extends Thread {
 					output.write(chunk_size, 0, nBytes);
 				}
 
+				// timestamping for ending main content downloading
+				Utilities.timeStamp("Content downloading ended    ");
+
+				// getting Wifi RSSI for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+
+				// getting Mobile Network RSSi for test results
+				Utilities.generateTestingResults(Constants.test_result_file, "MN RSSI                       : " + Utilities.getCellularRSSI() + " dBm");
+
+				Utilities.generateTestingResults(Constants.test_result_file, "-----------END-----------");
+
 				// Clearing accept counter
 				acceptCounter = 0;
-				
+
 				// flushing output
 				output.flush();
 				os.flush();
@@ -1013,12 +1042,12 @@ public class ControlTransceiver extends Thread {
 			}
 			finally{
 				for(int index=0; index < clientConnections.size(); index++)
-				try {
-					clientConnections.get(index).close();
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+					try {
+						clientConnections.get(index).close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 			}
 
 
@@ -1105,8 +1134,28 @@ public class ControlTransceiver extends Thread {
 					int prev_perc = 0;
 					int curr_perc = 0;
 					// Receive data
+
+					// Receive data
 					Log.d(TAG, "Starting Transfer : " + connectionSocket.toString());
-					Log.d(TAG, "Ttoal bytes: " + Integer.toString((int) totalBytes));
+					//				os = clientSocket.getOutputStream();
+
+					// Node type for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Node type                     : Cloud node");
+
+					// Battery level of the node
+					Utilities.generateTestingResults(Constants.test_result_file, "Battery level                 : " + Utilities.getBatVal().toString());
+
+					// getting Wifi RSSI for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+
+					// file size for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+					
+					// content distribution topology
+					Utilities.generateTestingResults(Constants.test_result_file, "Content distribution topology : Star");
+
+					// timestamping for starting main content downloading
+					Utilities.timeStamp("Starting to download content ");
 
 					while ((nBytes = is.read(chunk)) != -1){
 
@@ -1135,6 +1184,14 @@ public class ControlTransceiver extends Thread {
 							prev_perc = curr_perc;
 						}
 					}
+
+					// timestamping for ending main content downloading
+					Utilities.timeStamp("Content downloading ended    ");
+
+					// getting Wifi RSSI for test results
+					Utilities.generateTestingResults(Constants.test_result_file, "Wifi RSSI                     : " + Utilities.getWifiRSSI(context) + " dBm");
+
+					Utilities.generateTestingResults(Constants.test_result_file, "-----------END-----------");
 
 				} catch (IOException e) {
 					// TODO Auto-generated catch block

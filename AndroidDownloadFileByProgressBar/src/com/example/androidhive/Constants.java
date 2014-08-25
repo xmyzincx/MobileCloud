@@ -1,4 +1,4 @@
-package com.cwc.mobilecloud_star.utilities;
+package com.example.androidhive;
 
 import android.os.Environment;
 
@@ -25,7 +25,8 @@ public class Constants {
 	public static String results_path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/COIN_testResult";
 	public static String request_file = "file";
 	public static String request_url = "url";
-	public static String test_result_file = "COIN_RESULT.txt";
+	public static String test_result_file = "COIN_RESULT_SD.txt";
+
 
 
 }

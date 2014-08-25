@@ -1101,6 +1101,9 @@ public class ControlTransceiver extends Thread {
 				// file size for test results
 				Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
 				
+				// content distribution topology
+				Utilities.generateTestingResults(Constants.test_result_file, "Content distribution topology : Tree with " + ConfigData.relayNodes + " relay nodes");
+				
 				// timestamping for starting main content downloading
 				Utilities.timeStamp("Starting to download content ");
 				
@@ -1340,6 +1343,9 @@ public class ControlTransceiver extends Thread {
 				// file size for test results
 				Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
 				
+				// content distribution topology
+				Utilities.generateTestingResults(Constants.test_result_file, "Content distribution topology : Tree with " + ConfigData.relayNodes + " relay nodes");
+				
 				// timestamping for starting main content downloading
 				Utilities.timeStamp("Starting to download content ");
 				 
@@ -1554,6 +1560,9 @@ public class ControlTransceiver extends Thread {
 					
 					// file size for test results
 					Utilities.generateTestingResults(Constants.test_result_file, "File size                     : " + totalBytes/1048576 + " MB");
+					
+					// content distribution topology
+					Utilities.generateTestingResults(Constants.test_result_file, "Content distribution topology : Tree with " + ConfigData.relayNodes + " relay nodes");
 					
 					// timestamping for starting main content downloading
 					Utilities.timeStamp("Starting to download content");

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.cwc.mobilecloud_star"
+    package="com.example.androidhive"
     android:versionCode="1"
     android:versionName="1.0" >
 
-    <uses-sdk
-        android:minSdkVersion="14"
-        android:targetSdkVersion="17" />
+    <uses-sdk android:minSdkVersion="8" />
 
+    <!-- Permission: Allow Connect to Internet -->
+    
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
@@ -20,14 +20,12 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" >
     </uses-permission>
-
+    
     <application
-        android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
-        android:label="@string/app_name"
-        android:theme="@android:style/Theme.Holo.Light" >
+        android:label="@string/app_name" >
         <activity
-            android:name="com.cwc.mobilecloud_star.MainActivity"
+            android:name=".AndroidDownloadFileByProgressBarActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,12 +33,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <service
-            android:name="com.cwc.mobilecloud_star.ControllerService"
-            android:label="@string/controller_service_name" >
-        </service>
-        
-    </application>
+    </application>    
 
 </manifest>
